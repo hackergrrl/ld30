@@ -14,6 +14,8 @@ PlayState.prototype.preload = function() {
 
   game.load.spritesheet('bullet', 'assets/graphics/_bullet.png', 6*4, 6*4);
 
+  game.load.image('textbox', 'assets/graphics/_textbox.png');
+
   // game.load.audio('title', 'assets/music/title.mp3');
 
   game.scale.pageAlignHorizontally = true;
@@ -101,13 +103,17 @@ PlayState.prototype.create = function() {
     if (this.x >= 103*4*8 && !game.cinematic) {
       game.cinematic = true;
       game.camera.follow(null);
-      game.add.tween(game.camera).to({ x: 105*32, y: 20*32 }, 3000, Phaser.Easing.Quadratic.InOut, true);
+      game.add.tween(game.camera).to({ x: 105*32, y: 15*32 }, 3000, Phaser.Easing.Quadratic.InOut, true);
       game.add.tween(player).to({ x: "+96" }, 3000, Phaser.Easing.Quadratic.InOut, true);
       player.walkForce = 0;
       player.jumpForce = 0;
+      player.fireCountdown = 10000000;
+      game.time.events.add(2000, function() {
+        var tb = game.add.sprite(game.camera.x+8, game.camera.y + 1000, 'textbox');
+        game.add.tween(tb).to({ y: game.camera.y-4, x: game.camera.x+90 }, 2000, Phaser.Easing.Quadratic.InOut, true);
+      });
     }
   };
-
 
   game.camera.follow(this.player);
 };
