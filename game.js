@@ -41,7 +41,7 @@ PlayState.prototype.create = function() {
   var stars = game.add.group();
 
   this.fg = this.map.createLayer('FG');
-  this.map.setCollisionBetween(1, 5, true, this.fg);
+  this.map.setCollisionBetween(1, 7, true, this.fg);
   this.fg.resizeWorld();
 
   for (var i=0; i < 100; i++) {
@@ -68,14 +68,16 @@ PlayState.prototype.create = function() {
   game.physics.enable(player);
   player.body.bounce.set(0.1, 0.03);
   player.body.collideWorldBounds = true;
-  player.anchor.set(0.35, 0.5);
+  player.anchor.set(0.4, 0.5);
   player.walkForce = 1500;
   player.jumpForce = 500;
   player.body.drag.set(2000, 0);
   player.body.maxVelocity.x = 150;
   player.fireDelay = 150;
   player.fireCountdown = 0;
+  player.body.setSize(8*4, 12*4, 0*4, 2*4);
   this.player = player;
+  player.x = 80 * 4 * 8;
 
   player.canJump = function() {
     return this.body.onFloor() || this.body.touching.down;
@@ -94,6 +96,15 @@ PlayState.prototype.create = function() {
       player.animations.play('jump_upward');
     } else if (this.body.velocity.y > 10) {
       player.animations.play('jump_downward');
+    }
+
+    if (this.x >= 103*4*8 && !game.cinematic) {
+      game.cinematic = true;
+      game.camera.follow(null);
+      game.add.tween(game.camera).to({ x: 105*32, y: 20*32 }, 3000, Phaser.Easing.Quadratic.InOut, true);
+      game.add.tween(player).to({ x: "+96" }, 3000, Phaser.Easing.Quadratic.InOut, true);
+      player.walkForce = 0;
+      player.jumpForce = 0;
     }
   };
 
@@ -176,6 +187,9 @@ PlayState.prototype.update = function() {
   });
 };
 
+PlayState.prototype.render = function() {
+  // game.debug.body(this.player);
+}
 
 
 
