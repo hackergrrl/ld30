@@ -12,6 +12,8 @@ PlayState.prototype.preload = function() {
 
   game.load.spritesheet('player', 'assets/graphics/_player.png', 17*4, 16*4);
 
+  game.load.spritesheet('bullet', 'assets/graphics/_bullet.png', 6*4, 6*4);
+
   // game.load.audio('title', 'assets/music/title.mp3');
 
   game.scale.pageAlignHorizontally = true;
@@ -56,6 +58,8 @@ PlayState.prototype.create = function() {
   }
   this.stars = stars;
 
+  this.bullets = game.add.group();
+
   var player = game.add.sprite(16*4, 96*4, 'player');
   player.animations.add('idle', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 10, true);
   player.animations.add('jump_upward', [2], 10, false);
@@ -69,6 +73,8 @@ PlayState.prototype.create = function() {
   player.jumpForce = 500;
   player.body.drag.set(2000, 0);
   player.body.maxVelocity.x = 150;
+  player.fireDelay = 150;
+  player.fireCountdown = 0;
   this.player = player;
 
   player.canJump = function() {
@@ -89,15 +95,49 @@ PlayState.prototype.create = function() {
     } else if (this.body.velocity.y > 10) {
       player.animations.play('jump_downward');
     }
-    console.log(player.body.velocity.y);
   };
 
 
   game.camera.follow(this.player);
 };
 
+PlayState.prototype.createBullet = function(x, y, dir) {
+  var bullet = this.bullets.create(x, y, 'bullet');
+  bullet.animations.add('idle', [0], 10, true);
+  bullet.animations.add('expire', [1,2,3,4], 10, false);
+  bullet.animations.play('idle');
+  game.physics.enable(bullet);
+  // bullet.body.collideWorldBounds = true;
+  bullet.body.allowGravity = false;
+  bullet.body.velocity.x = dir * 650;
+  bullet.anchor.set(0.5, 0.5);
+  bullet.scale.x = dir;
+  bullet.lifetime = 400;
+
+  bullet.update = function() {
+    this.lifetime -= game.time.elapsed;
+    if (this.lifetime <= 0) {
+      this.expire();
+    }
+  };
+
+  bullet.expire = function() {
+    if (!bullet.alive) { return; }
+    var e = game.add.sprite(this.x, this.y - 2*4, 'bullet');
+    e.animations.add('expire', [1,2,3,4], 15, false);
+    e.animations.play('expire');
+    game.time.events.add(300, function() { e.destroy(); });
+    this.kill();
+  };
+};
+
 PlayState.prototype.update = function() {
   game.physics.arcade.collide(this.player, this.fg);
+  game.physics.arcade.collide(this.bullets, this.fg, function(bullet, tile) {
+      if (bullet !== null && bullet !== undefined && bullet.exists) {
+        bullet.expire();
+      }
+    });
 
   this.player.body.acceleration.x = 0;
   if (game.input.keyboard.isDown(Phaser.Keyboard.LEFT)) {
@@ -110,6 +150,17 @@ PlayState.prototype.update = function() {
   }
 
   this.player.update();
+
+  if (game.input.keyboard.justPressed(Phaser.Keyboard.SPACEBAR)) {
+    if (this.player.fireCountdown <= 0) {
+      this.createBullet(
+          this.player.scale.x === -1 ? this.player.x - 50 : this.player.x + 35,
+          this.player.y + 2*4,
+          this.player.scale.x);
+      this.player.fireCountdown = this.player.fireDelay;
+    }
+  }
+  this.player.fireCountdown -= game.time.elapsed;
 
   if (game.input.keyboard.justPressed(Phaser.Keyboard.UP)) {
     this.player.jump();
