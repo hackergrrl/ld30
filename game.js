@@ -16,7 +16,9 @@ PlayState.prototype.preload = function() {
 
   game.load.image('textbox', 'assets/graphics/_textbox.png');
 
-  // game.load.audio('title', 'assets/music/title.mp3');
+  game.load.audio('gun', 'assets/sounds/gun.wav');
+  game.load.audio('jump', 'assets/sounds/jump.wav');
+  game.load.audio('title', 'assets/music/title.mp3');
 
   game.scale.pageAlignHorizontally = true;
   game.scale.pageAlignVertically = true;
@@ -30,7 +32,11 @@ PlayState.prototype.create = function() {
   game.physics.arcade.gravity.y = 1350;
   game.physics.arcade.TILE_BIAS = 40;
 
-  // game.add.audio('title').play('', 0, 1, true);
+  game.gun = game.add.audio('gun');
+  game.jump = game.add.audio('jump');
+
+  // game.music = game.add.audio('title');
+  // game.music.play('', 0, 1, true);
 
   // game.stage.smoothed = false;
   // game.world.setBounds(0, 0, 2000, 2000);
@@ -79,7 +85,6 @@ PlayState.prototype.create = function() {
   player.fireCountdown = 0;
   player.body.setSize(8*4, 12*4, 0*4, 2*4);
   this.player = player;
-  player.x = 80 * 4 * 8;
 
   player.canJump = function() {
     return this.body.onFloor() || this.body.touching.down;
@@ -88,6 +93,7 @@ PlayState.prototype.create = function() {
   player.jump = function() {
     if (this.canJump()) {
       this.body.velocity.y = -this.jumpForce;
+      game.jump.play();
     }
   };
 
@@ -112,6 +118,7 @@ PlayState.prototype.create = function() {
         var tb = game.add.sprite(game.camera.x+8, game.camera.y + 1000, 'textbox');
         game.add.tween(tb).to({ y: game.camera.y-4, x: game.camera.x+90 }, 2000, Phaser.Easing.Quadratic.InOut, true);
       });
+      // game.add.tween(game.music).to({volume: 0}, 3000);
     }
   };
 
@@ -175,6 +182,7 @@ PlayState.prototype.update = function() {
           this.player.y + 2*4,
           this.player.scale.x);
       this.player.fireCountdown = this.player.fireDelay;
+      game.gun.play();
     }
   }
   this.player.fireCountdown -= game.time.elapsed;
@@ -214,7 +222,7 @@ TitleState.prototype.preload = function() {
   game.load.image('star_small', 'assets/graphics/_star_small.png');
   game.load.image('star_big', 'assets/graphics/_star_big.png');
 
-  game.load.spritesheet('player', 'assets/graphics/_player.png', 13*4, 12*4);
+  game.load.spritesheet('player', 'assets/graphics/_player.png', 17*4, 16*4);
 
   game.load.audio('title', 'assets/music/title.mp3');
 
@@ -251,7 +259,7 @@ TitleState.prototype.create = function() {
     this.visible = !this.visible;
   }, this.fg_text);
 
-  var player = game.add.sprite(16*4, 64*4, 'player');
+  var player = game.add.sprite(16*4, 60*4, 'player');
   player.animations.add('idle', [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 10, true);
   player.animations.play('idle');
 };
@@ -265,6 +273,10 @@ TitleState.prototype.update = function() {
       s.speed = game.rnd.frac() * s.maxSpeed + 0.5;
     }
   });
+
+  if (game.input.keyboard.justPressed(Phaser.Keyboard.ENTER)) {
+    game.state.start('play');
+  }
 };
 
 var w = 160 * 4;
@@ -272,5 +284,5 @@ var h = 144 * 4;
 var game = new Phaser.Game(w, h, Phaser.AUTO, 'monochain');
 game.state.add('title', TitleState);
 game.state.add('play', PlayState);
-game.state.start('play');
+game.state.start('title');
 
